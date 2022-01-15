@@ -6,7 +6,7 @@ import octoprint.plugin
 import board
 import neopixel
 
-pixel_pin = board.D18
+pixel_pin = board.D10
 num_pixels = 24
 pixel_order = neopixel.GRBW
 pixels = neopixel.NeoPixel(pixel_pin, num_pixels, brightness=0.2, auto_write=False, pixel_order=pixel_order)
@@ -61,7 +61,7 @@ class NeopixelIlluminationPlugin(octoprint.plugin.SettingsPlugin,
     def on_after_startup(self):
         self._logger.info("Hello Neopixel")
         pixels.fill((255, 0, 255, 0))
-
+        pixels.show()
 
 # If you want your plugin to be registered within OctoPrint under a different name than what you defined in setup.py
 # ("OctoPrint-PluginSkeleton"), you may define that here. Same goes for the other metadata derived from setup.py that
