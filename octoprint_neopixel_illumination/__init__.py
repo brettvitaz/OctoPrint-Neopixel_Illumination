@@ -60,7 +60,7 @@ class NeopixelIlluminationPlugin(octoprint.plugin.SettingsPlugin,
 
     def on_after_startup(self):
         self._logger.info("Hello Neopixel")
-        pixels.fill((255, 0, 255, 0))
+        pixels.fill((0, 255, 255, 0))
         pixels.show()
 
 # If you want your plugin to be registered within OctoPrint under a different name than what you defined in setup.py
