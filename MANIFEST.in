@@ -1,0 +1,4 @@
+include README.md
+recursive-include octoprint_neopixel_illumination/templates *
+recursive-include octoprint_neopixel_illumination/translations *
+recursive-include octoprint_neopixel_illumination/static *
