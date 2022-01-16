@@ -5,12 +5,12 @@
  * License: AGPLv3
  */
 $(function() {
-    function Neopixel_illuminationViewModel(parameters) {
+    function NeopixelIlluminationViewModel(parameters) {
         var self = this;
 
         // assign the injected parameters, e.g.:
-        // self.loginStateViewModel = parameters[0];
-        // self.settingsViewModel = parameters[1];
+        self.loginStateViewModel = parameters[0];
+        self.settingsViewModel = parameters[1];
 
         // TODO: Implement your plugin's view model here.
     }
@@ -20,7 +20,7 @@ $(function() {
      * and a full list of the available options.
      */
     OCTOPRINT_VIEWMODELS.push({
-        construct: Neopixel_illuminationViewModel,
+        construct: NeopixelIlluminationViewModel,
         // ViewModels your plugin depends on, e.g. loginStateViewModel, settingsViewModel, ...
         dependencies: [ /* "loginStateViewModel", "settingsViewModel" */ ],
         // Elements to bind to, e.g. #settings_plugin_neopixel_illumination, #tab_plugin_neopixel_illumination, ...
