@@ -3,8 +3,11 @@ from __future__ import absolute_import
 
 import octoprint.plugin
 
-import neopixel
-from adafruit_blinka.microcontroller.bcm283x.pin import Pin
+try:
+    import neopixel
+    from adafruit_blinka.microcontroller.bcm283x.pin import Pin
+except:
+    print("For development only...")
 
 
 class NeopixelIlluminationPlugin(
@@ -25,7 +28,7 @@ class NeopixelIlluminationPlugin(
             "enabled": False,
             "num_pixels": 24,
             "on_startup": False,
-            "pixel_order": neopixel.GRBW,
+            "pixel_order": "GRBW",
             "pixel_pin": 10,
             "url": "https://en.wikipedia.org/wiki/Hello_world",
         }
