@@ -7,12 +7,12 @@ import neopixel
 from adafruit_blinka.microcontroller.bcm283x.pin import Pin
 
 
-class NeopixelIlluminationPlugin(octoprint.plugin.SettingsPlugin,
-                                 octoprint.plugin.AssetPlugin,
-                                 octoprint.plugin.TemplatePlugin,
-                                 octoprint.plugin.StartupPlugin
-                                 ):
-
+class NeopixelIlluminationPlugin(
+    octoprint.plugin.SettingsPlugin,
+    octoprint.plugin.AssetPlugin,
+    octoprint.plugin.TemplatePlugin,
+    octoprint.plugin.StartupPlugin,
+):
     def __init__(self):
         super().__init__()
         self._pixels = None
@@ -21,12 +21,13 @@ class NeopixelIlluminationPlugin(octoprint.plugin.SettingsPlugin,
 
     def get_settings_defaults(self):
         return {
-            'brightness': 0.2,
-            'enabled': False,
-            'num_pixels': 24,
-            'on_startup': False,
-            'pixel_order': neopixel.GRBW,
-            'pixel_pin': 10,
+            "brightness": 0.2,
+            "enabled": False,
+            "num_pixels": 24,
+            "on_startup": False,
+            "pixel_order": neopixel.GRBW,
+            "pixel_pin": 10,
+            "url": "https://en.wikipedia.org/wiki/Hello_world",
         }
 
     def get_settings_version(self):
@@ -34,7 +35,11 @@ class NeopixelIlluminationPlugin(octoprint.plugin.SettingsPlugin,
 
     def get_template_configs(self):
         return [
-            dict(type="settings", name="Neopixel Illumination", custom_bindings=False),
+            {
+                "type": "settings",
+                "name": "Neopixel Illumination",
+                "custom_bindings": False,
+            },
         ]
 
     ##~~ AssetPlugin mixin
@@ -45,7 +50,7 @@ class NeopixelIlluminationPlugin(octoprint.plugin.SettingsPlugin,
         return {
             "js": ["js/neopixel_illumination.js"],
             "css": ["css/neopixel_illumination.css"],
-            "less": ["less/neopixel_illumination.less"]
+            "less": ["less/neopixel_illumination.less"],
         }
 
     ##~~ Softwareupdate hook
@@ -58,13 +63,11 @@ class NeopixelIlluminationPlugin(octoprint.plugin.SettingsPlugin,
             "neopixel_illumination": {
                 "displayName": "Neopixel Illumination Plugin",
                 "displayVersion": self._plugin_version,
-
                 # version check: github repository
                 "type": "github_release",
                 "user": "brettvitaz",
                 "repo": "OctoPrint-Neopixel_Illumination",
                 "current": self._plugin_version,
-
                 # update method: pip
                 "pip": "https://github.com/brettvitaz/OctoPrint-Neopixel_Illumination/archive/{target_version}.zip",
             }
@@ -72,12 +75,12 @@ class NeopixelIlluminationPlugin(octoprint.plugin.SettingsPlugin,
 
     def on_after_startup(self):
         self._logger.info("Hello Neopixel")
-        brightness = self._settings.get(['brightness'])
-        enabled = self._settings.get(['enabled'])
-        num_pixels = self._settings.get(['num_pixels'])
-        on_startup = self._settings.get(['on_startup'])
-        pixel_order = self._settings.get(['pixel_order'])
-        pixel_pin = self._settings.get(['pixel_pin'])
+        brightness = self._settings.get(["brightness"])
+        enabled = self._settings.get(["enabled"])
+        num_pixels = self._settings.get(["num_pixels"])
+        on_startup = self._settings.get(["on_startup"])
+        pixel_order = self._settings.get(["pixel_order"])
+        pixel_pin = self._settings.get(["pixel_pin"])
         self._logger.info(f"{enabled}, {type(enabled)}")
         if enabled:
             self._logger.info(f"{brightness}, {type(brightness)}")
@@ -90,7 +93,7 @@ class NeopixelIlluminationPlugin(octoprint.plugin.SettingsPlugin,
                 num_pixels,
                 brightness=brightness,
                 auto_write=False,
-                pixel_order=pixel_order
+                pixel_order=pixel_order,
             )
             if on_startup:
                 self._pixels.fill((0, 255, 255, 0))
@@ -103,7 +106,7 @@ class NeopixelIlluminationPlugin(octoprint.plugin.SettingsPlugin,
 # If you want your plugin to be registered within OctoPrint under a different name than what you defined in setup.py
 # ("OctoPrint-PluginSkeleton"), you may define that here. Same goes for the other metadata derived from setup.py that
 # can be overwritten via __plugin_xyz__ control properties. See the documentation for that.
-#__plugin_name__ = "Neopixel Illumination Plugin"
+# __plugin_name__ = "Neopixel Illumination Plugin"
 
 # Starting with OctoPrint 1.4.0 OctoPrint will also support to run under Python 3 in addition to the deprecated
 # Python 2. New plugins should make sure to run under both versions for now. Uncomment one of the following
