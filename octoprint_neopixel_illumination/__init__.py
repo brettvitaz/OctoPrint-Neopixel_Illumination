@@ -3,13 +3,8 @@ from __future__ import absolute_import
 
 import octoprint.plugin
 
-import board
 import neopixel
-
-pixel_pin = board.D10
-num_pixels = 24
-pixel_order = neopixel.GRBW
-pixels = neopixel.NeoPixel(pixel_pin, num_pixels, brightness=0.2, auto_write=False, pixel_order=pixel_order)
+from adafruit_blinka.microcontroller.bcm283x.pin import Pin
 
 
 class NeopixelIlluminationPlugin(octoprint.plugin.SettingsPlugin,
@@ -18,11 +13,20 @@ class NeopixelIlluminationPlugin(octoprint.plugin.SettingsPlugin,
                                  octoprint.plugin.StartupPlugin
                                  ):
 
+    def __init__(self):
+        super().__init__()
+        self._pixels = None
+
     ##~~ SettingsPlugin mixin
 
     def get_settings_defaults(self):
         return {
-            'pixel_pin': 10
+            'brightness': 0.2,
+            'enabled': False,
+            'num_pixels': 24,
+            'on_startup': False,
+            'pixel_order': neopixel.GRBW,
+            'pixel_pin': 10,
         }
 
     def get_settings_version(self):
@@ -68,8 +72,32 @@ class NeopixelIlluminationPlugin(octoprint.plugin.SettingsPlugin,
 
     def on_after_startup(self):
         self._logger.info("Hello Neopixel")
-        pixels.fill((0, 255, 255, 0))
-        pixels.show()
+        brightness = self._settings.get(['brightness'])
+        enabled = self._settings.get(['enabled'])
+        num_pixels = self._settings.get(['num_pixels'])
+        on_startup = self._settings.get(['on_startup'])
+        pixel_order = self._settings.get(['pixel_order'])
+        pixel_pin = self._settings.get(['pixel_pin'])
+        self._logger.info(f"{enabled}, {type(enabled)}")
+        if enabled:
+            self._logger.info(f"{brightness}, {type(brightness)}")
+            self._logger.info(f"{num_pixels}, {type(num_pixels)}")
+            self._logger.info(f"{on_startup}, {type(on_startup)}")
+            self._logger.info(f"{pixel_order}, {type(pixel_order)}")
+            self._logger.info(f"{pixel_pin}, {type(pixel_pin)}")
+            self._pixels = neopixel.NeoPixel(
+                Pin(pixel_pin),
+                num_pixels,
+                brightness=brightness,
+                auto_write=False,
+                pixel_order=pixel_order
+            )
+            if on_startup:
+                self._pixels.fill((0, 255, 255, 0))
+                self._pixels.show()
+            else:
+                self._pixels.fill((0, 0, 0, 0))
+                self._pixels.show()
 
 
 # If you want your plugin to be registered within OctoPrint under a different name than what you defined in setup.py
