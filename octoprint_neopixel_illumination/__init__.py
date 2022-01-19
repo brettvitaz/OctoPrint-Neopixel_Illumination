@@ -5,9 +5,19 @@ import octoprint.plugin
 
 try:
     import neopixel
-    from adafruit_blinka.microcontroller.bcm283x.pin import Pin
+    from microcontroller import Pin
 except:
+    from .mocks import neopixel
+    from .mocks.microcontroller import Pin
+
     print("For development only...")
+
+PIXEL_ORDERS = [
+    neopixel.GRB,
+    neopixel.GRBW,
+    neopixel.RGB,
+    neopixel.RGBW,
+]
 
 
 class NeopixelIlluminationPlugin(
@@ -99,7 +109,7 @@ class NeopixelIlluminationPlugin(
                 pixel_order=pixel_order,
             )
             if on_startup:
-                self._pixels.fill((0, 255, 255, 0))
+                self._pixels.fill((255, 0, 0, 0))
                 self._pixels.show()
             else:
                 self._pixels.fill((0, 0, 0, 0))
