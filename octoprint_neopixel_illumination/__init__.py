@@ -38,9 +38,8 @@ class NeopixelIlluminationPlugin(
             "enabled": False,
             "num_pixels": 24,
             "on_startup": False,
-            "pixel_order": "GRBW",
+            "pixel_order": neopixel.GRBW,
             "pixel_pin": 10,
-            "url": "https://en.wikipedia.org/wiki/Hello_world",
         }
 
     def get_settings_version(self):
@@ -50,7 +49,6 @@ class NeopixelIlluminationPlugin(
         return [
             {
                 "type": "settings",
-                "name": "Neopixel Illumination",
                 "custom_bindings": False,
             },
         ]
@@ -109,7 +107,7 @@ class NeopixelIlluminationPlugin(
                 pixel_order=pixel_order,
             )
             if on_startup:
-                self._pixels.fill((255, 0, 0, 0))
+                self._pixels.fill((127, 0, 0, 0))
                 self._pixels.show()
             else:
                 self._pixels.fill((0, 0, 0, 0))
@@ -119,7 +117,7 @@ class NeopixelIlluminationPlugin(
 # If you want your plugin to be registered within OctoPrint under a different name than what you defined in setup.py
 # ("OctoPrint-PluginSkeleton"), you may define that here. Same goes for the other metadata derived from setup.py that
 # can be overwritten via __plugin_xyz__ control properties. See the documentation for that.
-# __plugin_name__ = "Neopixel Illumination Plugin"
+__plugin_name__ = "Neopixel Illumination"
 
 # Starting with OctoPrint 1.4.0 OctoPrint will also support to run under Python 3 in addition to the deprecated
 # Python 2. New plugins should make sure to run under both versions for now. Uncomment one of the following

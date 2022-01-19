@@ -1,4 +1,4 @@
-<div id="settings_plugin_neopixel_illumination">
+<div>
     <h3>{{ _('Neopixel Illumination') }}</h3>
 
     <form class="form-horizontal">
@@ -8,22 +8,27 @@
                     <input type="checkbox"
                            data-bind="checked: settings.plugins.neopixel_illumination.enabled"> {{ _('Enable') }}
                 </label>
+            </div>
+            <div class="controls">
                 <label class="checkbox">
                     <input type="checkbox"
                            data-bind="checked: settings.plugins.neopixel_illumination.on_startup"> {{ _('Activate on startup') }}
                 </label>
-                <label class="control-label">{{ _('Pixel Pin') }}</label>
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label">{{ _('Pixel Pin') }}</label>
+            <div class="controls">
                 <input type="number"
-                       class="input-block-level"
+                       class="input-mini"
                        data-bind="value: settings.plugins.neopixel_illumination.pixel_pin"
                 >
-                <div id="red_intensity_slider" class="slider slider-horizontal" style="width: 200px;">
-                    <div class="slider-track">
-                        <div class="slider-selection" style="left: 50%; width: 50%;"></div>
-                        <div class="slider-handle round" style="left: 50%;"></div>
-                        <div class="slider-handle round" style="left: 50%;"></div>
-                    </div>
-                </div>
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label">{{ _('Pixel Order') }}</label>
+            <div class="controls">
+                <select data-bind="options: ['GRB', 'GRBW', 'RGB', 'RGBW'], value: settings.plugins.neopixel_illumination.pixel_order"></select>
             </div>
         </div>
     </form>

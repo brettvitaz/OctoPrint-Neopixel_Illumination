@@ -1,22 +1,3 @@
 <div>
-    <h1>Neopixel Illumination</h1>
-    <form class="form-horizontal">
-        <div class="control-group">
-            <div class="controls">
-                <label class="checkbox">
-                    <input type="checkbox"
-                           data-bind="checked: settings.plugins.neopixel_illumination.enabled"> {{ _('Enable') }}
-                </label>
-                <label class="checkbox">
-                    <input type="checkbox"
-                           data-bind="checked: settings.plugins.neopixel_illumination.on_startup"> {{ _('Activate on startup') }}
-                </label>
-                <label class="control-label">{{ _('Pixel Pin') }}</label>
-                <input type="number"
-                       class="input-block-level"
-                       data-bind="value: settings.plugins.neopixel_illumination.pixel_pin"
-                >
-            </div>
-        </div>
-    </form>
+    <h1>{{ _('Neopixel Illumination') }}</h1>
 </div>
