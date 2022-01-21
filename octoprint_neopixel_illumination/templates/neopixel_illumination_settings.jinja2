@@ -28,7 +28,7 @@
         <div class="control-group">
             <label class="control-label">{{ _('Pixel Order') }}</label>
             <div class="controls">
-                <select data-bind="options: ['GRB', 'GRBW', 'RGB', 'RGBW'], value: settings.plugins.neopixel_illumination.pixel_order"></select>
+                <select data-bind="options: {{ plugin_neopixel_illumination_pixel_order_list }}, value: settings.plugins.neopixel_illumination.pixel_order"></select>
             </div>
         </div>
     </form>

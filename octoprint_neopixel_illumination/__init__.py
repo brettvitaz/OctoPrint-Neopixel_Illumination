@@ -12,7 +12,7 @@ except:
 
     print("For development only...")
 
-PIXEL_ORDERS = [
+PIXEL_ORDER_LIST = [
     neopixel.GRB,
     neopixel.GRBW,
     neopixel.RGB,
@@ -25,7 +25,9 @@ class NeopixelIlluminationPlugin(
     octoprint.plugin.AssetPlugin,
     octoprint.plugin.TemplatePlugin,
     octoprint.plugin.StartupPlugin,
+    octoprint.plugin.EventHandlerPlugin,
 ):
+
     def __init__(self):
         super().__init__()
         self._pixels = None
@@ -40,6 +42,7 @@ class NeopixelIlluminationPlugin(
             "on_startup": False,
             "pixel_order": neopixel.GRBW,
             "pixel_pin": 10,
+            "startup_color": "#2a9d8f",
         }
 
     def get_settings_version(self):
@@ -51,7 +54,20 @@ class NeopixelIlluminationPlugin(
                 "type": "settings",
                 "custom_bindings": False,
             },
+            {
+                "type": "tab",
+                "custom_bindings": True,
+            },
+            {
+                "type": "navbar",
+                "custom_bindings": True,
+            }
         ]
+
+    def get_template_vars(self):
+        return {
+            "pixel_order_list": PIXEL_ORDER_LIST
+        }
 
     ##~~ AssetPlugin mixin
 
@@ -59,8 +75,8 @@ class NeopixelIlluminationPlugin(
         # Define your plugin's asset files to automatically include in the
         # core UI here.
         return {
-            "js": ["js/neopixel_illumination.js"],
-            "css": ["css/neopixel_illumination.css"],
+            "js": ["vendor/coloris/coloris.js", "js/neopixel_illumination.js", "js/coloris_cfg.js"],
+            "css": ["vendor/coloris/coloris.css", "css/neopixel_illumination.css"],
             "less": ["less/neopixel_illumination.less"],
         }
 
@@ -112,6 +128,10 @@ class NeopixelIlluminationPlugin(
             else:
                 self._pixels.fill((0, 0, 0, 0))
                 self._pixels.show()
+
+    def on_event(self, event, payload):
+        print("event", event)
+        print("payload", payload)
 
 
 # If you want your plugin to be registered within OctoPrint under a different name than what you defined in setup.py
