@@ -5,6 +5,8 @@
     left: 5px;
     right: auto;
     border-radius: 5px;
+    top: 10%;
+    transform: translateY(0%);
 }
 
 .square .clr-field input,

@@ -3,20 +3,43 @@ from __future__ import absolute_import
 
 import octoprint.plugin
 
-try:
-    import neopixel
-    from microcontroller import Pin
-except:
-    from .mocks import neopixel
-    from .mocks.microcontroller import Pin
+from .mocks import neopixel
+from .mocks.microcontroller import Pin
+from .mocks.neopixel import (
+    HttpNeoPixelDelegate,
+    LoggingNeoPixelDelegate,
+    SocketNeoPixelDelegate,
+    demo,
+    wheel,
+)
 
-    print("For development only...")
+BRIGHTNESS_KEY = "brightness"
+COLOR_KEY = "color"
+ENABLED_KEY = "enabled"
+JSON_HEADERS = {"Content-type": "application/json"}
+NEOPIXEL_API_HOST = "localhost:5001"
+NEOPIXEL_API_HOST_KEY = "neopixel_api_host"
+NEOPIXEL_API_SOCKET = "/tmp/neopixel_socket"
+NUM_PIXELS_KEY = "num_pixels"
+PARSE_GCODE_KEY = "parse_gcode"
+PIXEL_ORDER_KEY = "pixel_order"
+PIXEL_PIN_KEY = "pixel_pin"
+SET_COLOR_GCODE = "M150"
+STARTUP_COLOR_KEY = "startup_color"
+UPDATE_COLOR_COMMAND = "update_color"
 
 PIXEL_ORDER_LIST = [
     neopixel.GRB,
     neopixel.GRBW,
     neopixel.RGB,
     neopixel.RGBW,
+]
+
+CONFIG_ITEMS = [
+    ENABLED_KEY,
+    NUM_PIXELS_KEY,
+    PIXEL_ORDER_KEY,
+    PIXEL_PIN_KEY,
 ]
 
 
@@ -26,23 +49,25 @@ class NeopixelIlluminationPlugin(
     octoprint.plugin.TemplatePlugin,
     octoprint.plugin.StartupPlugin,
     octoprint.plugin.EventHandlerPlugin,
+    octoprint.plugin.SimpleApiPlugin,
 ):
-
     def __init__(self):
         super().__init__()
-        self._pixels = None
+        self._config: dict = {}
+        self._pixels: neopixel.NeoPixel = None
 
     ##~~ SettingsPlugin mixin
 
     def get_settings_defaults(self):
         return {
-            "brightness": 0.2,
-            "enabled": False,
-            "num_pixels": 24,
-            "on_startup": False,
-            "pixel_order": neopixel.GRBW,
-            "pixel_pin": 10,
-            "startup_color": "#2a9d8f",
+            BRIGHTNESS_KEY: 0.2,
+            ENABLED_KEY: False,
+            NEOPIXEL_API_HOST_KEY: NEOPIXEL_API_SOCKET,
+            NUM_PIXELS_KEY: 24,
+            PIXEL_ORDER_KEY: neopixel.GRBW,
+            PIXEL_PIN_KEY: 10,
+            STARTUP_COLOR_KEY: "#ffffff",
+            PARSE_GCODE_KEY: False,
         }
 
     def get_settings_version(self):
@@ -61,13 +86,11 @@ class NeopixelIlluminationPlugin(
             {
                 "type": "navbar",
                 "custom_bindings": True,
-            }
+            },
         ]
 
     def get_template_vars(self):
-        return {
-            "pixel_order_list": PIXEL_ORDER_LIST
-        }
+        return {"pixel_order_list": PIXEL_ORDER_LIST}
 
     ##~~ AssetPlugin mixin
 
@@ -75,7 +98,11 @@ class NeopixelIlluminationPlugin(
         # Define your plugin's asset files to automatically include in the
         # core UI here.
         return {
-            "js": ["vendor/coloris/coloris.js", "js/neopixel_illumination.js", "js/coloris_cfg.js"],
+            "js": [
+                "vendor/coloris/coloris.js",
+                "js/neopixel_illumination.js",
+                "js/coloris_cfg.js",
+            ],
             "css": ["vendor/coloris/coloris.css", "css/neopixel_illumination.css"],
             "less": ["less/neopixel_illumination.less"],
         }
@@ -100,38 +127,121 @@ class NeopixelIlluminationPlugin(
             }
         }
 
+    def on_settings_initialized(self):
+        self._config = {
+            setting_name: self._settings.get([setting_name])
+            for setting_name in CONFIG_ITEMS
+        }
+        self._logger.info(self._config)
+
+    def on_settings_save(self, data):
+        changed_config_keys = list(set(data.keys()).intersection(set(CONFIG_ITEMS)))
+        if changed_config_keys:
+            old_config = self._config.copy()
+            self._config.update(data)
+            if old_config != self._config:
+                self._initialize_pixel()
+
+        return super().on_settings_save(data)
+
     def on_after_startup(self):
-        self._logger.info("Hello Neopixel")
-        brightness = self._settings.get(["brightness"])
-        enabled = self._settings.get(["enabled"])
-        num_pixels = self._settings.get(["num_pixels"])
-        on_startup = self._settings.get(["on_startup"])
-        pixel_order = self._settings.get(["pixel_order"])
-        pixel_pin = self._settings.get(["pixel_pin"])
-        self._logger.info(f"{enabled}, {type(enabled)}")
+        self._initialize_pixel()
+
+    def get_api_commands(self):
+        return {"update_color": ["color"]}
+
+    def on_api_command(self, command, data):
+        if command == UPDATE_COLOR_COMMAND:
+            self._set_pixels(data[COLOR_KEY])
+
+    def _parse_color(self, hex_color: str):
+        if hex_color.startswith("#"):
+            rgbw = int(f"{hex_color[1:]:<08}", 16)
+            red = (rgbw >> 24) & 0xFF
+            green = (rgbw >> 16) & 0xFF
+            blue = (rgbw >> 8) & 0xFF
+            white = rgbw & 0xFF
+
+            return red, green, blue, white
+
+    def _set_pixels(self, hex_color: str):
+        enabled = self._settings.get([ENABLED_KEY])
         if enabled:
-            self._logger.info(f"{brightness}, {type(brightness)}")
-            self._logger.info(f"{num_pixels}, {type(num_pixels)}")
-            self._logger.info(f"{on_startup}, {type(on_startup)}")
-            self._logger.info(f"{pixel_order}, {type(pixel_order)}")
-            self._logger.info(f"{pixel_pin}, {type(pixel_pin)}")
-            self._pixels = neopixel.NeoPixel(
-                Pin(pixel_pin),
-                num_pixels,
-                brightness=brightness,
-                auto_write=False,
-                pixel_order=pixel_order,
-            )
-            if on_startup:
-                self._pixels.fill((127, 0, 0, 0))
-                self._pixels.show()
-            else:
-                self._pixels.fill((0, 0, 0, 0))
+            if enabled:
+                self._pixels.fill(self._parse_color(hex_color))
                 self._pixels.show()
 
-    def on_event(self, event, payload):
-        print("event", event)
-        print("payload", payload)
+    def _initialize_pixel(self):
+        enabled = self._settings.get(["enabled"])
+        if enabled:
+            brightness = float(self._settings.get(["brightness"]))
+            num_pixels = int(self._settings.get(["num_pixels"]))
+            pixel_order = self._settings.get(["pixel_order"])
+            pixel_pin = int(self._settings.get(["pixel_pin"]))
+            startup_color = self._settings.get(["startup_color"])
+
+            host = self._settings.get([NEOPIXEL_API_HOST_KEY])
+            delegate = SocketNeoPixelDelegate(host, self._logger)
+            # delegate = LoggingNeoPixelDelegate(self._logger)
+
+            self._pixels = neopixel.NeoPixel(
+                Pin(pixel_pin),
+                int(num_pixels),
+                brightness=brightness,
+                auto_write=True,
+                pixel_order=pixel_order,
+                delegate=delegate,
+            )
+
+            # demo(self._pixels)
+            self._set_pixels(startup_color)
+
+    def process_gcode(self, comm, phase, cmd: str, cmd_type, gcode, subcode, tags):
+        # M150 [B<intensity>] [I<pixel>] [P<intensity>] [R<intensity>] [S<strip>] [U<intensity>] [W<intensity>]
+        # M150 B100 R255 U50 W0
+        if (
+            self._settings.get([ENABLED_KEY])
+            and self._settings.get([PARSE_GCODE_KEY])
+            and gcode.upper().startswith(SET_COLOR_GCODE)
+        ):
+            parameter_list = cmd.split(" ")[1:]
+            is_color_change = False
+            index, brightness = -1, -1
+            red, green, blue, white = 0, 0, 0, 0
+
+            for parameter in parameter_list:
+                parameter_key = parameter[0].upper()
+                parameter_value = int(parameter[1:])
+
+                if parameter_key == "I":
+                    index = parameter_value
+                elif parameter_key == "S":
+                    pass  # not supported
+                elif parameter_key == "P":
+                    brightness = parameter_value / 255.0
+                elif parameter_key == "R":
+                    red = parameter_value
+                    is_color_change = True
+                elif parameter_key == "U":
+                    green = parameter_value
+                    is_color_change = True
+                elif parameter_key == "B":
+                    blue = parameter_value
+                    is_color_change = True
+                elif parameter_key == "W":
+                    white = parameter_value
+                    is_color_change = True
+
+            if index >= 0 and is_color_change:
+                self._pixels[index] = (red, green, blue, white)
+            elif is_color_change:
+                self._pixels.fill((red, green, blue, white))
+
+            self._logger.info(f"brightness {brightness}")
+            if brightness >= 0:
+                self._pixels.brightness = brightness
+
+        return cmd
 
 
 # If you want your plugin to be registered within OctoPrint under a different name than what you defined in setup.py
@@ -151,5 +261,6 @@ def __plugin_load__():
 
     global __plugin_hooks__
     __plugin_hooks__ = {
-        "octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information
+        "octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information,
+        "octoprint.comm.protocol.gcode.sent": __plugin_implementation__.process_gcode,
     }

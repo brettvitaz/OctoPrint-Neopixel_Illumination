@@ -9,10 +9,12 @@
                            data-bind="checked: settings.plugins.neopixel_illumination.enabled"> {{ _('Enable') }}
                 </label>
             </div>
+        </div>
+        <div class="control-group">
             <div class="controls">
                 <label class="checkbox">
                     <input type="checkbox"
-                           data-bind="checked: settings.plugins.neopixel_illumination.on_startup"> {{ _('Activate on startup') }}
+                           data-bind="checked: settings.plugins.neopixel_illumination.parse_gcode"> {{ _('Watch GCODE for M150 commands') }}
                 </label>
             </div>
         </div>
@@ -22,6 +24,15 @@
                 <input type="number"
                        class="input-mini"
                        data-bind="value: settings.plugins.neopixel_illumination.pixel_pin"
+                >
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label">{{ _('Number of Pixels') }}</label>
+            <div class="controls">
+                <input type="number"
+                       class="input-mini"
+                       data-bind="value: settings.plugins.neopixel_illumination.num_pixels"
                 >
             </div>
         </div>
