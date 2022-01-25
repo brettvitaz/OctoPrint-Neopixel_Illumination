@@ -1,11 +1,10 @@
-# OctoPrint Neopixel Illumination
+# OctoPrint NeoPixel Illumination
 
-Control Neopixels from Octoprint.
-The ultimate goal of this project is to intercept neopixel gcode commands and execute them on the Raspberry Pi.
+This plugin will allow fairly comprehensive control of NeoPixels from Octoprint.
 
-**TODO:** Describe what your plugin does.
-
-Currently, all it does is turn your neopixels teal. More to come...
+- Use your Raspberry Pi to power and control your NeoPixels. (I have tested powering up to 25 pixels from a Raspberry Pi 4).
+- Change color and intensity from a color picker dialog.
+- Intercept GCODE [M150](https://marlinfw.org/docs/gcode/M150.html) commands and execute them on the Raspberry Pi.
 
 ## Setup
 
@@ -14,14 +13,30 @@ or manually using this URL:
 
     https://github.com/brettvitaz/OctoPrint-Neopixel_Illumination/archive/master.zip
 
-### Preparing your RaspberryPi
+## Preparing your Raspberry Pi
 
-#### Ensure that SPI mode is enabled.
+### Identify desired control pin
+
+This can change based on your needs, but a recommended pin is [GPIO 18](https://pinout.xyz/pinout/pin12_gpio18#).
+
+### Add the API to the system startup
+
+Instructions coming...
+
+### Plug in your NeoPixels
+
+If running a small number of pixels, they can be powered directly from the Raspberry Pi.
+
+Please carefully review [these instructions](https://learn.adafruit.com/neopixels-on-raspberry-pi/raspberry-pi-wiring) for wiring your NeoPixel strip to the Raspberry Pi. 
+
+*n.b. I have witnessed damage to both Raspberry Pis and Arduinos when improperly wired.*
+
+### If using GPIO 10, ensure that SPI mode is enabled.
 
 Log in to your Raspberry Pi:
 
 ```bash
-$ ssh octopi.local
+$ ssh pi@octopi.local
 ```
 
 Enable SPI mode from Raspi Config:
@@ -32,19 +47,14 @@ $ sudo raspi-config
 
 Select `4. Interface Options`, `P4. SPI`, `Yes`, `OK`.
 
-#### Plug in your Neopixels
-
-If running a small number of pixels, they can be powered directly from the Raspberry Pi.
-
-Plug in the leads to:
-
-- +5v to physical pin 2
-- GND to physical pin 6
-- Data Input to GPIO 10 (physical pin 19)
-
-
 ## Configuration
 
-**TODO:** Describe your plugin's configuration options (if any).
+Open the OctoPrint configuration dialog and select Plugins | NeoPixel Illumination.
 
-Configuration options will exist for start-up mode (color, brightness, etc.), intercepting gcode, maybe others...
+- Enter the pixel color order for your NeoPixel controller.
+- Enter the [GPIO pin](https://pinout.xyz/). 
+- Enter the number of pixels in the device or strip.
+- Choose if you want to parse GCODE for M150 commands.
+- Enable the plugin.
+
+Choosing a color from the color picker will save it as the start-up color.
