@@ -15,23 +15,23 @@ or manually using this URL:
 
 ## Preparing your Raspberry Pi
 
+The GPIO pins require elevated privileges to use. A separate API script will be run as `root` user to connect the plugin to the NeoPixel's GPIO pin.
+
+This currently requires that the Raspberry Pi's `pi` user has the default password.
+
 ### Identify desired control pin
 
 This can change based on your needs, but a recommended pin is [GPIO 18](https://pinout.xyz/pinout/pin12_gpio18#).
-
-### Add the API to the system startup
-
-Instructions coming...
 
 ### Plug in your NeoPixels
 
 If running a small number of pixels, they can be powered directly from the Raspberry Pi.
 
-Please carefully review [these instructions](https://learn.adafruit.com/neopixels-on-raspberry-pi/raspberry-pi-wiring) for wiring your NeoPixel strip to the Raspberry Pi. 
+Please carefully review [these instructions](https://learn.adafruit.com/neopixels-on-raspberry-pi/raspberry-pi-wiring) for wiring your NeoPixel strip to the Raspberry Pi.
 
 *n.b. I have witnessed damage to both Raspberry Pis and Arduinos when improperly wired.*
 
-### If using GPIO 10, ensure that SPI mode is enabled.
+### If using SPI pins (e.g. GPIO 10), ensure that SPI mode is enabled.
 
 Log in to your Raspberry Pi:
 
@@ -52,7 +52,7 @@ Select `4. Interface Options`, `P4. SPI`, `Yes`, `OK`.
 Open the OctoPrint configuration dialog and select Plugins | NeoPixel Illumination.
 
 - Enter the pixel color order for your NeoPixel controller.
-- Enter the [GPIO pin](https://pinout.xyz/). 
+- Enter the [GPIO pin](https://pinout.xyz/).
 - Enter the number of pixels in the device or strip.
 - Choose if you want to parse GCODE for M150 commands.
 - Enable the plugin.
