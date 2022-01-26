@@ -31,8 +31,10 @@ PARSE_GCODE_KEY = "parse_gcode"
 PIXEL_ORDER_KEY = "pixel_order"
 PIXEL_PIN_KEY = "pixel_pin"
 SAVE_COLOR_COMMAND = "save_color"
+SAVE_BRIGHTNESS_COMMAND = "save_brightness"
 SET_COLOR_GCODE = "M150"
 STARTUP_COLOR_KEY = "startup_color"
+UPDATE_BRIGHTNESS_COMMAND = "update_brightness"
 UPDATE_COLOR_COMMAND = "update_color"
 
 PIXEL_ORDER_LIST = [
@@ -62,6 +64,7 @@ class NeopixelIlluminationPlugin(
     def __init__(self):
         super().__init__()
         self._config: dict = {}
+        self._current_brightness: float = None
         self._current_color: str = None
         self._pixels: neopixel.NeoPixel = None
         self._api_process: subprocess.Popen = None
@@ -70,12 +73,12 @@ class NeopixelIlluminationPlugin(
 
     def get_settings_defaults(self):
         return {
-            BRIGHTNESS_KEY: 0.2,
+            BRIGHTNESS_KEY: 1.0,
             ENABLED_KEY: False,
             NEOPIXEL_API_HOST_KEY: NEOPIXEL_API_SOCKET,
             NUM_PIXELS_KEY: 24,
             PIXEL_ORDER_KEY: neopixel.GRBW,
-            PIXEL_PIN_KEY: 10,
+            PIXEL_PIN_KEY: 18,
             STARTUP_COLOR_KEY: "#ffffff",
             PARSE_GCODE_KEY: False,
         }
@@ -158,7 +161,12 @@ class NeopixelIlluminationPlugin(
         self._initialize_pixel()
 
     def get_api_commands(self):
-        return {UPDATE_COLOR_COMMAND: ["color"], SAVE_COLOR_COMMAND: []}
+        return {
+            UPDATE_COLOR_COMMAND: ["color"],
+            SAVE_COLOR_COMMAND: [],
+            UPDATE_BRIGHTNESS_COMMAND: ["value"],
+            SAVE_BRIGHTNESS_COMMAND: [],
+        }
 
     def on_api_command(self, command, data):
         if command == UPDATE_COLOR_COMMAND:
@@ -166,6 +174,12 @@ class NeopixelIlluminationPlugin(
             self._set_pixels(self._current_color)
         elif command == SAVE_COLOR_COMMAND:
             self._settings.set([STARTUP_COLOR_KEY], self._current_color)
+            self._settings.save()
+        elif command == UPDATE_BRIGHTNESS_COMMAND:
+            self._current_brightness = float(data["value"])
+            self._set_brightness(self._current_brightness)
+        elif command == SAVE_BRIGHTNESS_COMMAND:
+            self._settings.set([BRIGHTNESS_KEY], self._current_brightness)
             self._settings.save()
 
     def on_shutdown(self):
@@ -198,35 +212,38 @@ class NeopixelIlluminationPlugin(
 
             return red, green, blue, white
 
+    def _set_brightness(self, value: float):
+        if self._settings.get_boolean([ENABLED_KEY]):
+            self._pixels.brightness = value
+            self._pixels.show()
+
     def _set_pixels(self, hex_color: str):
-        enabled = self._settings.get([ENABLED_KEY])
-        if enabled:
-            if enabled:
-                self._pixels.fill(self._parse_color(hex_color))
-                self._pixels.show()
+        if self._settings.get_boolean([ENABLED_KEY]):
+            self._pixels.fill(self._parse_color(hex_color))
+            self._pixels.show()
 
     def _initialize_pixel(self):
         enabled = self._settings.get_boolean(["enabled"])
         if enabled:
-            brightness = self._settings.get_float(["brightness"])
+            self._current_brightness = self._settings.get_float(["brightness"])
             num_pixels = self._settings.get_int(["num_pixels"])
             pixel_order = self._settings.get(["pixel_order"])
             pixel_pin = self._settings.get_int(["pixel_pin"])
-            startup_color = self._settings.get(["startup_color"])
+            self._current_color = self._settings.get(["startup_color"])
 
             delegate = SocketNeoPixelDelegate(SOCKET_SERVER_ADDRESS, self._logger)
 
             self._pixels = neopixel.NeoPixel(
                 Pin(pixel_pin),
                 int(num_pixels),
-                brightness=brightness,
+                brightness=self._current_brightness,
                 auto_write=False,
                 pixel_order=pixel_order,
                 delegate=delegate,
             )
 
             # demo(self._pixels)
-            self._set_pixels(startup_color)
+            self._set_pixels(self._current_color)
 
     def process_gcode(self, comm, phase, cmd: str, cmd_type, gcode, subcode, tags):
         # M150 [B<intensity>] [I<pixel>] [P<intensity>] [R<intensity>] [S<strip>] [U<intensity>] [W<intensity>]

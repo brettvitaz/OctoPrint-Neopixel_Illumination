@@ -8,26 +8,38 @@ $(function () {
     function NeopixelIlluminationViewModel(parameters) {
         var self = this;
 
-        // assign the injected parameters, e.g.:
         self.loginStateViewModel = parameters[0];
         self.settingsViewModel = parameters[1];
 
         self.currentColor = ko.observable();
-        self.newColor = ko.observable()
+        self.currentBrightness = ko.observable();
 
         self.onBeforeBinding = function () {
             self.currentColor(self.settingsViewModel.settings.plugins.neopixel_illumination.startup_color());
+            self.currentBrightness(self.settingsViewModel.settings.plugins.neopixel_illumination.brightness());
         }
 
         self.saveColor = function (picker, event) {
             OctoPrint.simpleApiCommand("neopixel_illumination", "save_color")
         }
 
+        self.saveBrightness = function (picker, event) {
+            OctoPrint.simpleApiCommand("neopixel_illumination", "save_brightness")
+        }
+
         self.updateColor = function (picker, event) {
-            let newColor = event.currentTarget.value
+            let newColor = event.currentTarget.value;
             if (newColor) {
-                self.currentColor(newColor)
+                self.currentColor(newColor);
                 OctoPrint.simpleApiCommand("neopixel_illumination", "update_color", {"color": newColor});
+            }
+        }
+
+        self.updateBrightness = function (picker, event) {
+            let newBrightness = event.currentTarget.value;
+            if (newBrightness) {
+                self.currentBrightness(newBrightness);
+                OctoPrint.simpleApiCommand("neopixel_illumination", "update_brightness", {"value": newBrightness});
             }
         }
     }

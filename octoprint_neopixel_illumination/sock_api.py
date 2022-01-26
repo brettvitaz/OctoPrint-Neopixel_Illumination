@@ -58,7 +58,7 @@ class Handler(StreamRequestHandler):
                     index, color = value
                     pixels[index] = color
                 elif key == "brightness":
-                    pixels.brightness = value
+                    pixels.brightness = float(value)
                 elif key == "show":
                     pixels.show()
         except:
