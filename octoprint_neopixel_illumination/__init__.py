@@ -30,6 +30,7 @@ NUM_PIXELS_KEY = "num_pixels"
 PARSE_GCODE_KEY = "parse_gcode"
 PIXEL_ORDER_KEY = "pixel_order"
 PIXEL_PIN_KEY = "pixel_pin"
+SAVE_COLOR_COMMAND = "save_color"
 SET_COLOR_GCODE = "M150"
 STARTUP_COLOR_KEY = "startup_color"
 UPDATE_COLOR_COMMAND = "update_color"
@@ -61,6 +62,7 @@ class NeopixelIlluminationPlugin(
     def __init__(self):
         super().__init__()
         self._config: dict = {}
+        self._current_color: str = None
         self._pixels: neopixel.NeoPixel = None
         self._api_process: subprocess.Popen = None
 
@@ -140,7 +142,6 @@ class NeopixelIlluminationPlugin(
             setting_name: self._settings.get([setting_name])
             for setting_name in CONFIG_ITEMS
         }
-        self._logger.info(self._config)
 
     def on_settings_save(self, data):
         changed_config_keys = list(set(data.keys()).intersection(set(CONFIG_ITEMS)))
@@ -157,11 +158,15 @@ class NeopixelIlluminationPlugin(
         self._initialize_pixel()
 
     def get_api_commands(self):
-        return {"update_color": ["color"]}
+        return {UPDATE_COLOR_COMMAND: ["color"], SAVE_COLOR_COMMAND: []}
 
     def on_api_command(self, command, data):
         if command == UPDATE_COLOR_COMMAND:
-            self._set_pixels(data[COLOR_KEY])
+            self._current_color = data[COLOR_KEY]
+            self._set_pixels(self._current_color)
+        elif command == SAVE_COLOR_COMMAND:
+            self._settings.set([STARTUP_COLOR_KEY], self._current_color)
+            self._settings.save()
 
     def on_shutdown(self):
         if self._api_process is not None:
@@ -180,7 +185,7 @@ class NeopixelIlluminationPlugin(
             passwd = subprocess.Popen(["echo", "raspberry"], stdout=subprocess.PIPE)
             api_args = ["sudo", "-S", python_filename, api_filename]
             self._api_process = subprocess.Popen(api_args, stdin=passwd.stdout)
-            time.sleep(5)
+            time.sleep(2)
             self._logger.info("Started NeoPixel api {} `{}`".format(self._api_process.pid, " ".join(api_args)))
 
     def _parse_color(self, hex_color: str):
@@ -201,12 +206,12 @@ class NeopixelIlluminationPlugin(
                 self._pixels.show()
 
     def _initialize_pixel(self):
-        enabled = self._settings.get(["enabled"])
+        enabled = self._settings.get_boolean(["enabled"])
         if enabled:
-            brightness = float(self._settings.get(["brightness"]))
-            num_pixels = int(self._settings.get(["num_pixels"]))
+            brightness = self._settings.get_float(["brightness"])
+            num_pixels = self._settings.get_int(["num_pixels"])
             pixel_order = self._settings.get(["pixel_order"])
-            pixel_pin = int(self._settings.get(["pixel_pin"]))
+            pixel_pin = self._settings.get_int(["pixel_pin"])
             startup_color = self._settings.get(["startup_color"])
 
             delegate = SocketNeoPixelDelegate(SOCKET_SERVER_ADDRESS, self._logger)

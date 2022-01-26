@@ -4,7 +4,8 @@
     <div class="examples">
         <div class="example square">
             <p>Choose color:</p>
-            <input type="text" class="coloris" data-bind="value: currentColor, event: {input: updateColor, change: saveColor}" data-coloris>
+            <input type="text" class="coloris" data-bind="value: currentColor, event: {input: updateColor}" data-coloris>
         </div>
+        <button class="btn btn-primary" data-bind="click: saveColor">Save start color</button>
     </div>
 </div>

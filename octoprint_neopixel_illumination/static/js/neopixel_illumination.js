@@ -20,12 +20,7 @@ $(function () {
         }
 
         self.saveColor = function (picker, event) {
-            let newColor = event.currentTarget.value;
-            if (newColor) {
-                self.currentColor(newColor)
-                OctoPrint.simpleApiCommand("neopixel_illumination", "update_color", {"color": newColor});
-                OctoPrint.settings.savePluginSettings("neopixel_illumination", {"startup_color": newColor});
-            }
+            OctoPrint.simpleApiCommand("neopixel_illumination", "save_color")
         }
 
         self.updateColor = function (picker, event) {
