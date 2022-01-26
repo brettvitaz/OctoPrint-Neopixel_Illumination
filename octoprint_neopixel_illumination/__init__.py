@@ -1,6 +1,10 @@
 # coding=utf-8
 from __future__ import absolute_import
 
+import os
+import subprocess
+import time
+
 import octoprint.plugin
 
 from .mocks import neopixel
@@ -12,6 +16,8 @@ from .mocks.neopixel import (
     demo,
     wheel,
 )
+
+SOCKET_SERVER_ADDRESS = "/tmp/neopixel_socket"
 
 BRIGHTNESS_KEY = "brightness"
 COLOR_KEY = "color"
@@ -50,11 +56,13 @@ class NeopixelIlluminationPlugin(
     octoprint.plugin.StartupPlugin,
     octoprint.plugin.EventHandlerPlugin,
     octoprint.plugin.SimpleApiPlugin,
+    octoprint.plugin.ShutdownPlugin,
 ):
     def __init__(self):
         super().__init__()
         self._config: dict = {}
         self._pixels: neopixel.NeoPixel = None
+        self._api_process: subprocess.Popen = None
 
     ##~~ SettingsPlugin mixin
 
@@ -145,6 +153,7 @@ class NeopixelIlluminationPlugin(
         return super().on_settings_save(data)
 
     def on_after_startup(self):
+        self._initialize_api()
         self._initialize_pixel()
 
     def get_api_commands(self):
@@ -153,6 +162,26 @@ class NeopixelIlluminationPlugin(
     def on_api_command(self, command, data):
         if command == UPDATE_COLOR_COMMAND:
             self._set_pixels(data[COLOR_KEY])
+
+    def on_shutdown(self):
+        if self._api_process is not None:
+            try:
+                passwd = subprocess.Popen(["echo", "raspberry"], stdout=subprocess.PIPE)
+                subprocess.Popen(["sudo", "-S", "kill", str(self._api_process.pid)], stdin=passwd.stdout)
+                self._api_process.wait()
+                self._logger.info("Shut down NeoPixel api.")
+            except:
+                self._logger.info("NeoPixel api does not exist.")
+
+    def _initialize_api(self):
+        if self._api_process is None:
+            python_filename = r"/home/pi/oprint/bin/python3"
+            api_filename = os.path.join(os.path.dirname(__file__), "sock_api.py")
+            passwd = subprocess.Popen(["echo", "raspberry"], stdout=subprocess.PIPE)
+            api_args = ["sudo", "-S", python_filename, api_filename]
+            self._api_process = subprocess.Popen(api_args, stdin=passwd.stdout)
+            time.sleep(5)
+            self._logger.info("Started NeoPixel api {} `{}`".format(self._api_process.pid, " ".join(api_args)))
 
     def _parse_color(self, hex_color: str):
         if hex_color.startswith("#"):
@@ -180,15 +209,13 @@ class NeopixelIlluminationPlugin(
             pixel_pin = int(self._settings.get(["pixel_pin"]))
             startup_color = self._settings.get(["startup_color"])
 
-            host = self._settings.get([NEOPIXEL_API_HOST_KEY])
-            delegate = SocketNeoPixelDelegate(host, self._logger)
-            # delegate = LoggingNeoPixelDelegate(self._logger)
+            delegate = SocketNeoPixelDelegate(SOCKET_SERVER_ADDRESS, self._logger)
 
             self._pixels = neopixel.NeoPixel(
                 Pin(pixel_pin),
                 int(num_pixels),
                 brightness=brightness,
-                auto_write=True,
+                auto_write=False,
                 pixel_order=pixel_order,
                 delegate=delegate,
             )
@@ -237,7 +264,6 @@ class NeopixelIlluminationPlugin(
             elif is_color_change:
                 self._pixels.fill((red, green, blue, white))
 
-            self._logger.info(f"brightness {brightness}")
             if brightness >= 0:
                 self._pixels.brightness = brightness
 

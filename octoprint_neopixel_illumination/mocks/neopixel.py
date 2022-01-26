@@ -19,11 +19,15 @@ GRBW = "GRBW"
 """Green Red Blue White"""
 
 
+def get_logger():
+    return logging.getLogger("octoprint.plugins.neopixel_illumination.api.neopixel")
+
+
 class NeoPixelDelegate:
     def __init__(self, logger: logging.Logger):
         self._logger = logger
 
-    def configure(self, config):
+    def init(self, config):
         pass
 
     def show(self):
@@ -46,8 +50,8 @@ class NeoPixelDelegate:
 
 
 class LoggingNeoPixelDelegate(NeoPixelDelegate):
-    def configure(self, config):
-        self._logger.info(f"config {config}")
+    def init(self, config):
+        self._logger.info(f"config {json.dumps(config)}")
 
     def show(self):
         self._logger.info("show")
@@ -76,7 +80,7 @@ class HttpNeoPixelDelegate(NeoPixelDelegate):
         self._config = None
         self._neopixel_api = http.client.HTTPConnection(api_host)
 
-    def configure(self, config):
+    def init(self, config):
         self._config = config
         self._post("/create", json.dumps(self._config), self.JSON_HEADERS)
 
@@ -109,10 +113,10 @@ class HttpNeoPixelDelegate(NeoPixelDelegate):
         self._get(f"/fill/{r},{g},{b},{w}")
 
     def set_item(self, index: int, r: int, g: int, b: int, w: int):
-        self._get(f"/{index}/{r},{g},{b},{w}")
+        self._get(f"/pixel/{index}/{r},{g},{b},{w}")
 
     def get_item(self, index: int):
-        self._get(f"/{index}")
+        self._get(f"/pixel/{index}")
 
     def set_brightness(self, brightness: float):
         self._get(f"/brightness/{brightness}")
@@ -127,29 +131,27 @@ class SocketNeoPixelDelegate(NeoPixelDelegate):
         self._client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         try:
             self._client.connect(server_address)
-            self._connected = True
         except ConnectionRefusedError:
-            self._logger.exception("Connection refused: {}".format(server_address))
-            self._connected = False
+            self._logger.error("Connection refused: {}".format(server_address))
 
     def _send(self, data: dict):
         message = json.dumps(data)
-        if self._connected:
+        try:
             self._client.send(message.encode() + b"\n")
-        else:
-            self._logger.debug(">>> {}".format(message))
+        except (BrokenPipeError, OSError) as e:
+            self._logger.error("{}: {}".format(e, self._client))
 
-    def configure(self, config: dict):
-        self._send({"config": config})
+    def init(self, config: dict):
+        self._send({"init": config})
 
     def show(self):
-        self._send({"send": ""})
+        self._send({"show": ""})
 
     def fill(self, r: int, g: int, b: int, w: int):
         self._send({"fill": (r, g, b, w)})
 
     def set_item(self, index: int, r: int, g: int, b: int, w: int):
-        self._send({str(index): (r, g, b, w)})
+        self._send({"pixel": [index, (r, g, b, w)]})
 
     def set_brightness(self, brightness: float):
         self._send({"brightness": brightness})
@@ -165,7 +167,7 @@ class NeoPixel:
         brightness: float = 1.0,
         auto_write: bool = True,
         pixel_order: str = None,
-        delegate: NeoPixelDelegate,
+        delegate: NeoPixelDelegate = None,
     ):
         self._pin = pin
         self._pixels = n
@@ -183,8 +185,8 @@ class NeoPixel:
 
         self._pixel_buffer = [(0, 0, 0, 0) for _ in range(n)]
 
-        self._delegate: NeoPixelDelegate = delegate
-        self._delegate.configure(self._config)
+        self._delegate: NeoPixelDelegate = delegate or LoggingNeoPixelDelegate(get_logger())
+        self._delegate.init(self._config)
 
     def __repr__(self):
         return "[" + ", ".join([str(x) for x in self]) + "]"
