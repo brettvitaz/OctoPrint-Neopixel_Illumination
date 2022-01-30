@@ -289,7 +289,9 @@ class NeopixelIlluminationPlugin(
             if brightness >= 0:
                 self._pixels.brightness = brightness
 
-        return cmd
+            return None,
+
+        return
 
 
 # If you want your plugin to be registered within OctoPrint under a different name than what you defined in setup.py
@@ -310,5 +312,5 @@ def __plugin_load__():
     global __plugin_hooks__
     __plugin_hooks__ = {
         "octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information,
-        "octoprint.comm.protocol.gcode.sent": __plugin_implementation__.process_gcode,
+        "octoprint.comm.protocol.gcode.sending": __plugin_implementation__.process_gcode,
     }
