@@ -25,6 +25,8 @@
     alpha: true,
     focusInput: true,
     autoClose: false,
+    inline: false,
+    defaultColor: '#000000',
     clearButton: {
       show: false,
       label: 'Clear' },
@@ -75,7 +77,14 @@
           if (options.theme) {
             settings.theme = options.theme;
           }
+
+          // Set the theme and color scheme
           picker.className = "clr-picker clr-" + settings.theme + " clr-" + settings.themeMode;
+
+          // Update the color picker's position if inline mode is in use
+          if (settings.inline) {
+            updatePickerPosition();
+          }
           break;
         case 'margin':
           options.margin *= 1;
@@ -97,12 +106,10 @@
               var swatches = [];
 
               options.swatches.forEach(function (swatch, i) {
-                swatches.push("<button id=\"clr-swatch-" + i + "\" aria-labelledby=\"clr-swatch-label clr-swatch-" + i + "\" style=\"color: " + swatch + ";\">" + swatch + "</button>");
+                swatches.push("<button type=\"button\" id=\"clr-swatch-" + i + "\" aria-labelledby=\"clr-swatch-label clr-swatch-" + i + "\" style=\"color: " + swatch + ";\">" + swatch + "</button>");
               });
 
-              if (swatches.length) {
-                getEl('clr-swatches').innerHTML = "<div>" + swatches.join('') + "</div>";
-              }})();
+              getEl('clr-swatches').innerHTML = swatches.length ? "<div>" + swatches.join('') + "</div>" : '';})();
           }
           break;
         case 'swatchesOnly':
@@ -116,6 +123,16 @@
         case 'alpha':
           settings.alpha = !!options.alpha;
           picker.setAttribute('data-alpha', settings.alpha);
+          break;
+        case 'inline':
+          settings.inline = !!options.inline;
+          picker.setAttribute('data-inline', settings.inline);
+
+          if (settings.inline) {
+            var defaultColor = options.defaultColor || settings.defaultColor;
+            updatePickerPosition();
+            setColorFromStr(defaultColor);
+          }
           break;
         case 'clearButton':
           var display = 'none';
@@ -168,31 +185,67 @@
   function bindFields(selector) {
     // Show the color picker on click on the input fields that match the selector
     addListener(document, 'click', selector, function (event) {
-      var parent = settings.parent;
-      var coords = event.target.getBoundingClientRect();
-      var scrollY = window.scrollY;
-      var reposition = { left: false, top: false };
-      var offset = { x: 0, y: 0 };
-      var left = coords.x;
-      var top = scrollY + coords.y + coords.height + settings.margin;
+      // Skip if inline mode is in use
+      if (settings.inline) {
+        return;
+      }
 
       currentEl = event.target;
       oldColor = currentEl.value;
       currentFormat = getColorFormatFromStr(oldColor);
       picker.classList.add('clr-open');
 
-      var pickerWidth = picker.offsetWidth;
-      var pickerHeight = picker.offsetHeight;
+      updatePickerPosition();
+      setColorFromStr(oldColor);
+
+      if (settings.focusInput) {
+        colorValue.focus({ preventScroll: true });
+      }
+
+      // Trigger an "open" event
+      currentEl.dispatchEvent(new Event('open', { bubbles: true }));
+    });
+
+    // Update the color preview of the input fields that match the selector
+    addListener(document, 'input', selector, function (event) {
+      var parent = event.target.parentNode;
+
+      // Only update the preview if the field has been previously wrapped
+      if (parent.classList.contains('clr-field')) {
+        parent.style.color = event.target.value;
+      }
+    });
+  }
+
+  /**
+   * Update the color picker's position and the color gradient's offset
+   */
+  function updatePickerPosition() {
+    var parent = settings.parent;
+    var scrollY = window.scrollY;
+    var pickerWidth = picker.offsetWidth;
+    var pickerHeight = picker.offsetHeight;
+    var reposition = { left: false, top: false };
+    var parentStyle, parentMarginTop, parentBorderTop;
+    var offset = { x: 0, y: 0 };
+
+    if (parent) {
+      parentStyle = window.getComputedStyle(parent);
+      parentMarginTop = parseFloat(parentStyle.marginTop);
+      parentBorderTop = parseFloat(parentStyle.borderTopWidth);
+
+      offset = parent.getBoundingClientRect();
+      offset.y += parentBorderTop + scrollY;
+    }
+
+    if (!settings.inline) {
+      var coords = currentEl.getBoundingClientRect();
+      var left = coords.x;
+      var top = scrollY + coords.y + coords.height + settings.margin;
 
       // If the color picker is inside a custom container
       // set the position relative to it
       if (parent) {
-        var style = window.getComputedStyle(parent);
-        var marginTop = parseFloat(style.marginTop);
-        var borderTop = parseFloat(style.borderTopWidth);
-
-        offset = parent.getBoundingClientRect();
-        offset.y += borderTop + scrollY;
         left -= offset.x;
         top -= offset.y;
 
@@ -201,7 +254,7 @@
           reposition.left = true;
         }
 
-        if (top + pickerHeight > parent.clientHeight - marginTop) {
+        if (top + pickerHeight > parent.clientHeight - parentMarginTop) {
           top -= coords.height + pickerHeight + settings.margin * 2;
           reposition.top = true;
         }
@@ -225,29 +278,14 @@
       picker.classList.toggle('clr-top', reposition.top);
       picker.style.left = left + "px";
       picker.style.top = top + "px";
-      colorAreaDims = {
-        width: colorArea.offsetWidth,
-        height: colorArea.offsetHeight,
-        x: picker.offsetLeft + colorArea.offsetLeft + offset.x,
-        y: picker.offsetTop + colorArea.offsetTop + offset.y };
+    }
 
+    colorAreaDims = {
+      width: colorArea.offsetWidth,
+      height: colorArea.offsetHeight,
+      x: picker.offsetLeft + colorArea.offsetLeft + offset.x,
+      y: picker.offsetTop + colorArea.offsetTop + offset.y };
 
-      setColorFromStr(oldColor);
-
-      if (settings.focusInput) {
-        colorValue.focus({ preventScroll: true });
-      }
-    });
-
-    // Update the color preview of the input fields that match the selector
-    addListener(document, 'input', selector, function (event) {
-      var parent = event.target.parentNode;
-
-      // Only update the preview if the field has been previously wrapped
-      if (parent.classList.contains('clr-field')) {
-        parent.style.color = event.target.value;
-      }
-    });
   }
 
   /**
@@ -261,7 +299,7 @@
       if (!parentNode.classList.contains('clr-field')) {
         var wrapper = document.createElement('div');
 
-        wrapper.innerHTML = "<button aria-labelledby=\"clr-open-label\"></button>";
+        wrapper.innerHTML = "<button type=\"button\" aria-labelledby=\"clr-open-label\"></button>";
         parentNode.insertBefore(wrapper, field);
         wrapper.setAttribute('class', 'clr-field');
         wrapper.style.color = field.value;
@@ -275,7 +313,7 @@
    * @param {boolean} [revert] If true, revert the color to the original value.
    */
   function closePicker(revert) {
-    if (currentEl) {
+    if (currentEl && !settings.inline) {
       // Revert the color to the original value if needed
       if (revert && oldColor !== currentEl.value) {
         currentEl.value = oldColor;
@@ -288,7 +326,11 @@
         currentEl.dispatchEvent(new Event('change', { bubbles: true }));
       }
 
+      // Hide the picker dialog
       picker.classList.remove('clr-open');
+
+      // Trigger a "close" event
+      currentEl.dispatchEvent(new Event('close', { bubbles: true }));
 
       if (settings.focusInput) {
         currentEl.focus({ preventScroll: true });
@@ -341,10 +383,14 @@
    * @param {number} [color] Color value to override the active color.
    */
   function pickColor(color) {
+    color = color !== undefined ? color : colorValue.value;
+
     if (currentEl) {
-      currentEl.value = color !== undefined ? color : colorValue.value;
+      currentEl.value = color;
       currentEl.dispatchEvent(new Event('input', { bubbles: true }));
     }
+
+    document.dispatchEvent(new CustomEvent('coloris:pick', { detail: { color: color } }));
   }
 
   /**
@@ -622,6 +668,9 @@
         a: match[6] * 1 };
 
 
+      // Workaround to mitigate a Chromium bug where the alpha value is rounded incorrectly
+      rgba.a = +rgba.a.toFixed(2);
+
     } else {
       match = ctx.fillStyle.replace('#', '').match(/.{2}/g).map(function (h) {return parseInt(h, 16);});
       rgba = {
@@ -705,7 +754,7 @@
     picker.setAttribute('id', 'clr-picker');
     picker.className = 'clr-picker';
     picker.innerHTML =
-    "<input id=\"clr-color-value\" class=\"clr-color\" type=\"text\" value=\"\" aria-label=\"" + settings.a11y.input + "\">" + ("<div id=\"clr-color-area\" class=\"clr-gradient\" role=\"application\" aria-label=\"" +
+    "<input id=\"clr-color-value\" class=\"clr-color\" type=\"text\" value=\"\" spellcheck=\"false\" aria-label=\"" + settings.a11y.input + "\">" + ("<div id=\"clr-color-area\" class=\"clr-gradient\" role=\"application\" aria-label=\"" +
     settings.a11y.instruction + "\">") +
     '<div id="clr-color-marker" class="clr-marker" tabindex="0"></div>' +
     '</div>' +
@@ -730,8 +779,8 @@
     '<span></span>' +
     '</fieldset>' +
     '</div>' +
-    '<div id="clr-swatches" class="clr-swatches"></div>' + ("<button id=\"clr-clear\" class=\"clr-clear\">" +
-    settings.clearButton.label + "</button>") + ("<button id=\"clr-color-preview\" class=\"clr-preview\" aria-label=\"" +
+    '<div id="clr-swatches" class="clr-swatches"></div>' + ("<button type=\"button\" id=\"clr-clear\" class=\"clr-clear\">" +
+    settings.clearButton.label + "</button>") + ("<button type=\"button\" id=\"clr-color-preview\" class=\"clr-preview\" aria-label=\"" +
     settings.a11y.close + "\"></button>") + ("<span id=\"clr-open-label\" hidden>" +
     settings.a11y.open + "</span>") + ("<span id=\"clr-swatch-label\" hidden>" +
     settings.a11y.swatch + "</span>");
@@ -911,7 +960,8 @@
     var methods = {
       set: configure,
       wrap: wrapFields,
-      close: closePicker };
+      close: closePicker,
+      updatePosition: updatePickerPosition };
 
 
     function Coloris(options) {
