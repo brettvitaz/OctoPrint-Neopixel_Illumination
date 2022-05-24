@@ -34,6 +34,8 @@ SAVE_COLOR_COMMAND = "save_color"
 SAVE_BRIGHTNESS_COMMAND = "save_brightness"
 SET_COLOR_GCODE = "M150"
 STARTUP_COLOR_KEY = "startup_color"
+SUDO_DEFAULT_PASSWORD = "raspberry"
+SUDO_PASSWORD_KEY = "sudo_password"
 UPDATE_BRIGHTNESS_COMMAND = "update_brightness"
 UPDATE_COLOR_COMMAND = "update_color"
 
@@ -49,6 +51,7 @@ CONFIG_ITEMS = [
     NUM_PIXELS_KEY,
     PIXEL_ORDER_KEY,
     PIXEL_PIN_KEY,
+    SUDO_PASSWORD_KEY
 ]
 
 
@@ -68,6 +71,7 @@ class NeopixelIlluminationPlugin(
         self._current_color: str = None
         self._pixels: neopixel.NeoPixel = None
         self._api_process: subprocess.Popen = None
+        self._delegate: SocketNeoPixelDelegate = None
 
     ##~~ SettingsPlugin mixin
 
@@ -81,6 +85,7 @@ class NeopixelIlluminationPlugin(
             PIXEL_PIN_KEY: 18,
             STARTUP_COLOR_KEY: "#ffffff",
             PARSE_GCODE_KEY: False,
+            SUDO_PASSWORD_KEY: SUDO_DEFAULT_PASSWORD
         }
 
     def get_settings_version(self):
@@ -157,7 +162,8 @@ class NeopixelIlluminationPlugin(
         return super().on_settings_save(data)
 
     def on_after_startup(self):
-        self._initialize_api()
+        sudo_password = self._settings.get([SUDO_PASSWORD_KEY])
+        self._initialize_api(sudo_password)
         self._initialize_pixel()
 
     def get_api_commands(self):
@@ -185,22 +191,21 @@ class NeopixelIlluminationPlugin(
     def on_shutdown(self):
         if self._api_process is not None:
             try:
-                passwd = subprocess.Popen(["echo", "raspberry"], stdout=subprocess.PIPE)
-                subprocess.Popen(["sudo", "-S", "kill", str(self._api_process.pid)], stdin=passwd.stdout)
-                self._api_process.wait()
+                passwd_process = subprocess.Popen(["echo", (self._settings.get([SUDO_PASSWORD_KEY]))], stdout=subprocess.PIPE)
+                subprocess.Popen(["sudo", "-S", "kill", str(self._api_process.pid)], stdin=passwd_process.stdout)
+                self._api_process.wait(10)
                 self._logger.info("Shut down NeoPixel api.")
             except:
                 self._logger.info("NeoPixel api does not exist.")
 
-    def _initialize_api(self):
+    def _initialize_api(self, sudo_password):
         if self._api_process is None:
             python_filename = r"/home/pi/oprint/bin/python3"
             api_filename = os.path.join(os.path.dirname(__file__), "sock_api.py")
-            passwd = subprocess.Popen(["echo", "raspberry"], stdout=subprocess.PIPE)
-            api_args = ["sudo", "-S", python_filename, api_filename]
-            self._api_process = subprocess.Popen(api_args, stdin=passwd.stdout)
+            passwd_process = subprocess.Popen(["echo", sudo_password], stdout=subprocess.PIPE)
+            self._api_process = subprocess.Popen(["sudo", "-S", python_filename, api_filename], stdin=passwd_process.stdout)
             time.sleep(2)
-            self._logger.info("Started NeoPixel api {} `{}`".format(self._api_process.pid, " ".join(api_args)))
+            self._logger.info("Started NeoPixel api {} `{}`".format(self._api_process.pid, " ".join(self._api_process.args)))
 
     def _parse_color(self, hex_color: str):
         if hex_color.startswith("#"):
