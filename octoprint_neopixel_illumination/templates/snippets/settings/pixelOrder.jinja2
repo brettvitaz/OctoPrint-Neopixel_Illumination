@@ -1,0 +1,9 @@
+<div class="control-group" title="{{ _('NeoPixel color order.')|edq }}">
+    <label class="control-label" for="settings_plugin_neopixel_illumination_pixel_order">{{ _('Pixel Order') }}</label>
+    <div class="controls">
+        <select
+                data-bind="options: {{ plugin_neopixel_illumination_pixel_order_list }}, value: settings.plugins.neopixel_illumination.pixel_order"
+                id="settings_plugin_neopixel_illumination_pixel_order"
+        ></select>
+    </div>
+</div>

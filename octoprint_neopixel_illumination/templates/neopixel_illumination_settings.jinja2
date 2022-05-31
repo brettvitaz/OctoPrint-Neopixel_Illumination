@@ -2,55 +2,13 @@
     <h3>{{ _('Neopixel Illumination') }}</h3>
 
     <form class="form-horizontal">
-        <div class="control-group">
-            <div class="controls">
-                <label class="checkbox">
-                    <input type="checkbox"
-                           data-bind="checked: settings.plugins.neopixel_illumination.enabled"> {{ _('Enable') }}
-                </label>
-            </div>
-        </div>
-        <div class="control-group">
-            <div class="controls">
-                <label class="checkbox">
-                    <input type="checkbox"
-                           data-bind="checked: settings.plugins.neopixel_illumination.parse_gcode"> {{ _('Watch GCODE for M150 commands') }}
-                </label>
-            </div>
-        </div>
-        <div class="control-group">
-            <label class="control-label">{{ _('Pixel Pin') }}</label>
-            <div class="controls">
-                <input type="number"
-                       class="input-mini"
-                       data-bind="value: settings.plugins.neopixel_illumination.pixel_pin"
-                >
-            </div>
-        </div>
-        <div class="control-group">
-            <label class="control-label">{{ _('Number of Pixels') }}</label>
-            <div class="controls">
-                <input type="number"
-                       class="input-mini"
-                       data-bind="value: settings.plugins.neopixel_illumination.num_pixels"
-                >
-            </div>
-        </div>
-        <div class="control-group">
-            <label class="control-label">{{ _('Brightness') }}</label>
-            <div class="controls">
-                <input type="number"
-                       class="input-mini"
-                       data-bind="value: settings.plugins.neopixel_illumination.brightness"
-                >
-            </div>
-        </div>
-        <div class="control-group">
-            <label class="control-label">{{ _('Pixel Order') }}</label>
-            <div class="controls">
-                <select data-bind="options: {{ plugin_neopixel_illumination_pixel_order_list }}, value: settings.plugins.neopixel_illumination.pixel_order"></select>
-            </div>
-        </div>
+        {% include "snippets/settings/enable.jinja2" %}
+        {% include "snippets/settings/watchGcode.jinja2" %}
+        {% include "snippets/settings/pixelPin.jinja2" %}
+        {% include "snippets/settings/numberOfPixels.jinja2" %}
+        {% include "snippets/settings/pixelOrder.jinja2" %}
+        {% include "snippets/settings/brightness.jinja2" %}
+
         <div>
             <div>
                 <small><a href="#" class="muted" data-bind="toggleContent: { class: 'fa-caret-right fa-caret-down', parent: '.form-horizontal', container: '.hide' }"><i class="fas fa-caret-right"></i> {{ _('Advanced options') }}</a></small>
