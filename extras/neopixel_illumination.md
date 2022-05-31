@@ -12,13 +12,6 @@ date: 2022-05-24
 homepage: https://github.com/brettvitaz/OctoPrint-Neopixel_Illumination
 source: https://github.com/brettvitaz/OctoPrint-Neopixel_Illumination
 archive: https://github.com/brettvitaz/OctoPrint-Neopixel_Illumination/archive/master.zip
-
-# TODO
-# Set this to true if your plugin uses the dependency_links setup parameter to include
-# library versions not yet published on PyPi. SHOULD ONLY BE USED IF THERE IS NO OTHER OPTION!
-#follow_dependency_links: false
-
-# TODO
 tags:
 - neopixel
 - m150
@@ -26,19 +19,18 @@ tags:
 - led
 - neo
 - pixel
-
-# TODO
 screenshots:
-- url: url of a screenshot, /assets/img/...
-  alt: alt-text of a screenshot
-  caption: caption of a screenshot
-- url: url of another screenshot, /assets/img/...
-  alt: alt-text of another screenshot
-  caption: caption of another screenshot
-- ...
+- url: /assets/img/plugins/NeopixelIllumination/navbar_control.png
+  alt: Navbar control
+  caption: Navbar Control
+- url: /assets/img/plugins/NeopixelIllumination/tab_control.png
+  alt: Tab control
+  caption: Tab Control
+- url: /assets/img/plugins/NeopixelIllumination/settings.png
+  alt: Settings
+  caption: Settings
 
-# TODO
-featuredimage: url of a featured image for your plugin, /assets/img/...
+featuredimage: /assets/img/plugins/NeopixelIllumination/navbar_control.png
 
 compatibility:
   os:
@@ -50,5 +42,28 @@ compatibility:
 
 ---
 
-**TODO**: Longer description of your plugin, configuration examples etc. This part will be visible on the page at
-http://plugins.octoprint.org/plugin/neopixel_illumination/
+# NeoPixel Illumination
+
+This plugin will allow control of NeoPixels from Octoprint.
+
+- Use your Raspberry Pi to power and control your NeoPixels. (I have tested powering up to 25 pixels from a Raspberry Pi 4).
+- Change color and intensity from a color picker dialog.
+- Intercept GCODE [M150][M150] commands and execute them on the Raspberry Pi.
+
+## Configuration
+
+| **Setting**           | **Description**                                 | **Default**  |
+|-----------------------|-------------------------------------------------|--------------|
+| Enable              	 | Enable/Disable NeoPixel strip        	       |              |
+| Watch GCODE for M150  | Supports parsing [M150][M150] commands in GCODE |              |
+| Pixel Pin             | GPIO control pin  	                           | [18][PIN18]  |
+| Number of Pixels      | Number of pixels to control                     | 24           |
+| Pixel Order           | Color order supported by neopixel strip         | [GRBW][GRBW] |
+| Brightness            | Startup brightness                              | 1.0          |
+| sudo Password         | Password for the 'pi' user                      | raspberry    |
+
+Please see https://github.com/brettvitaz/OctoPrint-Neopixel_Illumination for more information.
+
+[M150]: https://marlinfw.org/docs/gcode/M150.html
+[PIN18]: https://pinout.xyz/pinout/pin12_gpio18#
+[GRBW]: https://learn.adafruit.com/adafruit-neopixel-uberguide/python-circuitpython
