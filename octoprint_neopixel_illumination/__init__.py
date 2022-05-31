@@ -63,6 +63,7 @@ class NeopixelIlluminationPlugin(
     octoprint.plugin.EventHandlerPlugin,
     octoprint.plugin.SimpleApiPlugin,
     octoprint.plugin.ShutdownPlugin,
+    octoprint.plugin.RestartNeedingPlugin,
 ):
     def __init__(self):
         super().__init__()
@@ -201,7 +202,7 @@ class NeopixelIlluminationPlugin(
     def _initialize_api(self, sudo_password):
         if self._api_process is None:
             python_filename = r"/home/pi/oprint/bin/python3"
-            api_filename = os.path.join(os.path.dirname(__file__), "sock_api.py")
+            api_filename = os.path.join(self._basefolder, "sock_api.py")
             passwd_process = subprocess.Popen(["echo", sudo_password], stdout=subprocess.PIPE)
             self._api_process = subprocess.Popen(["sudo", "-S", python_filename, api_filename], stdin=passwd_process.stdout)
             time.sleep(2)
