@@ -1,6 +1,7 @@
 Coloris({
     el: '.coloris',
     alpha: true,
+    forceAlpha: true,
     swatches: [
         'rgb(127,0,0)',
         '#2a9d8f',
@@ -11,7 +12,7 @@ Coloris({
         '#023e8a',
         '#0077b6',
         '#0096c7',
-        '#00b4d8',
-        '#48cae4'
+        '#ffffff00',
+        '#000000ff'
     ]
 });
