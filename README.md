@@ -11,7 +11,7 @@ This plugin will allow fairly comprehensive control of NeoPixels from Octoprint.
 Install via the bundled [Plugin Manager](https://docs.octoprint.org/en/master/bundledplugins/pluginmanager.html)
 or manually using this URL:
 
-    https://github.com/brettvitaz/OctoPrint-Neopixel_Illumination/archive/master.zip
+    https://github.com/brettvitaz/OctoPrint-Neopixel_Illumination/archive/main.zip
 
 ## Preparing your Raspberry Pi
 
