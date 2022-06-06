@@ -1,3 +1,4 @@
+import getopt
 import json
 import logging
 import os
@@ -6,33 +7,31 @@ from socketserver import UnixStreamServer, StreamRequestHandler
 
 SOCKET_SERVER_ADDRESS = "/tmp/neopixel_socket"
 
-if os.path.exists(r"/home/pi/.octoprint/logs"):
-    log_path = r"/home/pi/.octoprint/logs"
-else:
-    log_path = "./"
-file_handler = logging.FileHandler(os.path.join(log_path, "neopixel_api.log"), "a")
-file_handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
-file_handler.setLevel(logging.DEBUG)
+logger: logging.Logger = None
 
-stdout_handler = logging.StreamHandler(sys.stdout)
-stdout_handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
-stdout_handler.setLevel(logging.DEBUG)
 
-logger = logging.getLogger("octoprint.plugins.neopixel_illumination.api")
-logger.addHandler(file_handler)
-logger.addHandler(stdout_handler)
-logger.setLevel(logging.INFO)
+def setup_logger(log_path):
+    global logger
+    file_handler = logging.FileHandler(log_path, "a")
+    file_handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
+    file_handler.setLevel(logging.DEBUG)
+
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    stdout_handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
+    stdout_handler.setLevel(logging.DEBUG)
+
+    logger = logging.getLogger("octoprint.plugins.neopixel_illumination.api")
+    logger.addHandler(file_handler)
+    logger.addHandler(stdout_handler)
+    logger.setLevel(logging.INFO)
+
 
 try:
     import microcontroller
     import neopixel
-
-    logger.info("Prod")
 except:
     import mocks.microcontroller as microcontroller
     import mocks.neopixel as neopixel
-
-    logger.info("Dev")
 
 PIXEL_CONFIG_DEFAULT = {
     "brightness": 1.0,
@@ -84,6 +83,20 @@ class ThreadedUnixStreamServer(UnixStreamServer):
 
 
 if __name__ == '__main__':
+    log_path = "/tmp/plugin_neopixel_illumination_api.log"
+
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "l:")
+    except getopt.GetoptError:
+        print(f"{sys.argv[0]} -l <log path>")
+        sys.exit(2)
+
+    for opt, arg in opts:
+        if opt == "-l":
+            log_path = arg
+
+    setup_logger(log_path)
+
     logger.info("Starting server".format(SOCKET_SERVER_ADDRESS))
     try:
         os.unlink(SOCKET_SERVER_ADDRESS)

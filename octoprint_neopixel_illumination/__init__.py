@@ -208,7 +208,15 @@ class NeopixelIlluminationPlugin(
         if self._api_process is None:
             api_filename = os.path.join(self._basefolder, "sock_api.py")
             passwd_process = subprocess.Popen(["echo", sudo_password], stdout=subprocess.PIPE)
-            self._api_process = subprocess.Popen(["sudo", "-S", sys.executable, api_filename], stdin=passwd_process.stdout)
+            self._api_process = subprocess.Popen(
+                [
+                    "sudo",
+                    "-S",
+                    sys.executable,
+                    api_filename,
+                    "-l",
+                    self._settings.get_plugin_logfile_path(postfix="api")
+                ], stdin=passwd_process.stdout)
             self._logger.info("Started NeoPixel api {} `{}`".format(self._api_process.pid, " ".join(self._api_process.args)))
 
     def _parse_color(self, hex_color: str):
