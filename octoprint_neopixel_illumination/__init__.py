@@ -158,14 +158,10 @@ class NeopixelIlluminationPlugin(
         }
 
     def on_settings_save(self, data):
-        changed_config_keys = list(set(data.keys()).intersection(set(CONFIG_ITEMS)))
-        if changed_config_keys:
-            old_config = self._config.copy()
-            self._config.update(data)
-            if old_config != self._config:
-                self._initialize_pixel()
+        diff = super().on_settings_save(data)
+        self._initialize_pixel()
 
-        return super().on_settings_save(data)
+        return diff
 
     def on_after_startup(self):
         sudo_password = self._settings.get([SUDO_PASSWORD_KEY])
