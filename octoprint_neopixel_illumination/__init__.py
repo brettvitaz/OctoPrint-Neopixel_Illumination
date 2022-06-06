@@ -89,6 +89,11 @@ class NeopixelIlluminationPlugin(
             SUDO_PASSWORD_KEY: SUDO_DEFAULT_PASSWORD
         }
 
+    def get_settings_restricted_paths(self):
+        return {
+            "never": [[SUDO_PASSWORD_KEY]]
+        }
+
     def get_settings_version(self):
         return 1
 
