@@ -3,7 +3,7 @@ from __future__ import absolute_import
 
 import os
 import subprocess
-import time
+import sys
 
 import octoprint.plugin
 
@@ -206,11 +206,9 @@ class NeopixelIlluminationPlugin(
 
     def _initialize_api(self, sudo_password):
         if self._api_process is None:
-            python_filename = r"/home/pi/oprint/bin/python3"
             api_filename = os.path.join(self._basefolder, "sock_api.py")
             passwd_process = subprocess.Popen(["echo", sudo_password], stdout=subprocess.PIPE)
-            self._api_process = subprocess.Popen(["sudo", "-S", python_filename, api_filename], stdin=passwd_process.stdout)
-            time.sleep(2)
+            self._api_process = subprocess.Popen(["sudo", "-S", sys.executable, api_filename], stdin=passwd_process.stdout)
             self._logger.info("Started NeoPixel api {} `{}`".format(self._api_process.pid, " ".join(self._api_process.args)))
 
     def _parse_color(self, hex_color: str):
